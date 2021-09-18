@@ -2,6 +2,7 @@ package edu.byu.cs.tweeter.client.presenter;
 
 import java.util.List;
 
+import edu.byu.cs.tweeter.client.cache.Cache;
 import edu.byu.cs.tweeter.client.model.service.FollowerService;
 import edu.byu.cs.tweeter.client.model.service.FollowingService;
 import edu.byu.cs.tweeter.client.model.service.UserService;
@@ -44,10 +45,10 @@ public class FollowerPresenter implements FollowerService.GetFollowerObserver,Us
     }
 
 
-    public FollowerPresenter(FollowerPresenter.View view, AuthToken authToken, User targetUser){
+    public FollowerPresenter(FollowerPresenter.View view, User targetUser){
         this.view = view;
         this.targetUser = targetUser;
-        this.authToken = authToken;
+        this.authToken = Cache.getInstance().getCurrUserAuthToken();
     }
     public void loadMoreItems(){
         if(!isLoading && hasMorePages){

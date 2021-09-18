@@ -97,7 +97,7 @@ public class FollowersFragment extends Fragment implements FollowerPresenter.Vie
 
         //noinspection ConstantConditions
         User user = (User) getArguments().getSerializable(USER_KEY);
-        presenter = new FollowerPresenter(this,Cache.getInstance().getCurrUserAuthToken(),user);
+        presenter = new FollowerPresenter(this,user);
         RecyclerView followersRecyclerView = view.findViewById(R.id.followersRecyclerView);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this.getContext());
