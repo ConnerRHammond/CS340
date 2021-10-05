@@ -45,7 +45,7 @@ public class FeedService {
         public void handleMessage(@NonNull Message msg) {
             boolean success = msg.getData().getBoolean(GetFeedTask.SUCCESS_KEY);
             if (success) {
-                List<Status> statuses = (List<Status>) msg.getData().getSerializable(GetStoryTask.STATUSES_KEY);
+                List<Status> statuses = (List<Status>) msg.getData().getSerializable(GetStoryTask.ITEMS_KEY);
                 Boolean hasMorePages = msg.getData().getBoolean(GetStoryTask.MORE_PAGES_KEY);
 
                 Status lastStatus = (statuses.size() > 0) ? statuses.get(statuses.size() - 1) : null;

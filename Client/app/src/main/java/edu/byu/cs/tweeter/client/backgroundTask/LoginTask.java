@@ -5,6 +5,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import java.io.IOException;
+
 import edu.byu.cs.tweeter.model.domain.AuthToken;
 import edu.byu.cs.tweeter.model.domain.User;
 import edu.byu.cs.tweeter.util.FakeData;
@@ -13,7 +15,7 @@ import edu.byu.cs.tweeter.util.Pair;
 /**
  * Background task that logs in a user (i.e., starts a session).
  */
-public class LoginTask implements Runnable {
+public class LoginTask extends AuthenticationTask{
 
     private static final String LOG_TAG = "LoginTask";
 
@@ -37,70 +39,20 @@ public class LoginTask implements Runnable {
     private Handler messageHandler;
 
     public LoginTask(String username, String password, Handler messageHandler) {
-        this.username = username;
-        this.password = password;
-        this.messageHandler = messageHandler;
+        super(username,password,messageHandler);
     }
+
 
     @Override
-    public void run() {
-        try {
-            Pair<User, AuthToken> loginResult = doLogin();
-
-            User loggedInUser = loginResult.getFirst();
-            AuthToken authToken = loginResult.getSecond();
-
-            BackgroundTaskUtils.loadImage(loggedInUser);
-
-            sendSuccessMessage(loggedInUser, authToken);
-
-        } catch (Exception ex) {
-            Log.e(LOG_TAG, ex.getMessage(), ex);
-            sendExceptionMessage(ex);
-        }
+    protected boolean runTask() throws IOException {
+        this.user = getFakeData().getFirstUser();
+        this.authToken = getFakeData().getAuthToken();
+        BackgroundTaskUtils.loadImage(user);
+        return true;
     }
 
-    private FakeData getFakeData() {
-        return new FakeData();
-    }
 
-    private Pair<User, AuthToken> doLogin() {
-        User loggedInUser = getFakeData().getFirstUser();
-        AuthToken authToken = getFakeData().getAuthToken();
-        return new Pair<>(loggedInUser, authToken);
-    }
 
-    private void sendSuccessMessage(User loggedInUser, AuthToken authToken) {
-        Bundle msgBundle = new Bundle();
-        msgBundle.putBoolean(SUCCESS_KEY, true);
-        msgBundle.putSerializable(USER_KEY, loggedInUser);
-        msgBundle.putSerializable(AUTH_TOKEN_KEY, authToken);
 
-        Message msg = Message.obtain();
-        msg.setData(msgBundle);
 
-        messageHandler.sendMessage(msg);
-    }
-
-    private void sendFailedMessage(String message) {
-        Bundle msgBundle = new Bundle();
-        msgBundle.putBoolean(SUCCESS_KEY, false);
-        msgBundle.putString(MESSAGE_KEY, message);
-
-        Message msg = Message.obtain();
-        msg.setData(msgBundle);
-
-        messageHandler.sendMessage(msg);
-    }
-
-    private void sendExceptionMessage(Exception exception) {
-        Bundle msgBundle = new Bundle();
-        msgBundle.putBoolean(SUCCESS_KEY, false);
-        msgBundle.putSerializable(EXCEPTION_KEY, exception);
-
-        Message msg = Message.obtain();
-        msg.setData(msgBundle);
-
-        messageHandler.sendMessage(msg);
-    }
 }
