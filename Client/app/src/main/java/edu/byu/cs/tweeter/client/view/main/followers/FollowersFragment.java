@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,15 +21,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import edu.byu.cs.client.R;
-import edu.byu.cs.tweeter.client.backgroundTask.GetFollowersTask;
-import edu.byu.cs.tweeter.client.backgroundTask.GetUserTask;
 import edu.byu.cs.tweeter.client.cache.Cache;
 import edu.byu.cs.tweeter.client.presenter.FollowerPresenter;
-import edu.byu.cs.tweeter.client.presenter.FollowingPresenter;
+import edu.byu.cs.tweeter.client.presenter.PagedPresenter;
 import edu.byu.cs.tweeter.client.view.main.MainActivity;
 import edu.byu.cs.tweeter.client.view.util.ImageUtils;
 import edu.byu.cs.tweeter.model.domain.User;
@@ -38,7 +33,7 @@ import edu.byu.cs.tweeter.model.domain.User;
 /**
  * Implements the "Followers" tab.
  */
-public class FollowersFragment extends Fragment implements FollowerPresenter.View {
+public class FollowersFragment extends Fragment implements PagedPresenter.PagedView<User> {
 
     private static final String LOG_TAG = "FollowersFragment";
     private static final String USER_KEY = "UserKey";
@@ -65,12 +60,12 @@ public class FollowersFragment extends Fragment implements FollowerPresenter.Vie
         fragment.setArguments(args);
         return fragment;
     }
+
     @Override
-    public void addItems(List<User> followees) {
-        followersRecyclerViewAdapter.addItems(followees);
-    }
+    public void setLoading(Boolean value) {followersRecyclerViewAdapter.setLoading(value);; }
+
     @Override
-    public void setLoading(boolean value){ followersRecyclerViewAdapter.setLoading(value); }
+    public void addItems(List newItems) { followersRecyclerViewAdapter.addItems(newItems); }
 
     @Override
     public void navigateToUser(User user) {
@@ -80,8 +75,8 @@ public class FollowersFragment extends Fragment implements FollowerPresenter.Vie
     }
 
     @Override
-    public void displayErrorMessage(String Message) {
-        Toast.makeText(getActivity(),Message,Toast.LENGTH_LONG);
+    public void navigateToUrl(String clickable) {
+
     }
 
 
@@ -97,7 +92,7 @@ public class FollowersFragment extends Fragment implements FollowerPresenter.Vie
 
         //noinspection ConstantConditions
         User user = (User) getArguments().getSerializable(USER_KEY);
-        presenter = new FollowerPresenter(this,user);
+        presenter = new FollowerPresenter(this, Cache.getInstance().getCurrUserAuthToken(),user);
         RecyclerView followersRecyclerView = view.findViewById(R.id.followersRecyclerView);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this.getContext());
@@ -141,7 +136,7 @@ public class FollowersFragment extends Fragment implements FollowerPresenter.Vie
 //                            userAlias.getText().toString(), new GetUserHandler());
 //                    ExecutorService executor = Executors.newSingleThreadExecutor();
 //                    executor.execute(getUserTask);
-                    presenter.goToUser(userAlias.getText().toString());
+                    presenter.getUser(userAlias.getText().toString());
 //                    Toast.makeText(getContext(), "Getting user's profile...", Toast.LENGTH_LONG).show();
                 }
             });

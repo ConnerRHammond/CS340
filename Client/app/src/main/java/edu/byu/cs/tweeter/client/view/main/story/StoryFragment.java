@@ -5,7 +5,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextPaint;
@@ -29,13 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import edu.byu.cs.client.R;
-import edu.byu.cs.tweeter.client.backgroundTask.GetStoryTask;
-import edu.byu.cs.tweeter.client.backgroundTask.GetUserTask;
 import edu.byu.cs.tweeter.client.cache.Cache;
+import edu.byu.cs.tweeter.client.presenter.PagedPresenter;
 import edu.byu.cs.tweeter.client.presenter.StoryPresenter;
 import edu.byu.cs.tweeter.client.view.main.MainActivity;
 import edu.byu.cs.tweeter.client.view.util.ImageUtils;
@@ -45,7 +41,7 @@ import edu.byu.cs.tweeter.model.domain.User;
 /**
  * Implements the "Story" tab.
  */
-public class StoryFragment extends Fragment implements StoryPresenter.View {
+public class StoryFragment extends Fragment implements PagedPresenter.PagedView<Status> {
     private static final String LOG_TAG = "StoryFragment";
     private static final String USER_KEY = "UserKey";
 
@@ -73,11 +69,12 @@ public class StoryFragment extends Fragment implements StoryPresenter.View {
     }
 
     @Override
+    public void setLoading(Boolean value) {storyRecyclerViewAdapter.setLoading(value);}
+
+    @Override
     public void addItems(List<Status> statuses) {
         storyRecyclerViewAdapter.addItems(statuses);
     }
-    @Override
-    public void setLoading(boolean value){storyRecyclerViewAdapter.setLoading(value); }
 
     @Override
     public void navigateToUser(User user) {
@@ -90,11 +87,6 @@ public class StoryFragment extends Fragment implements StoryPresenter.View {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         startActivity(intent);
     }
-    @Override
-    public void displayErrorMessage(String Message) {
-        Toast.makeText(getActivity(),Message,Toast.LENGTH_LONG);
-    }
-
 
     @Override
     public void displayInfoMessage(String message) {
@@ -108,7 +100,7 @@ public class StoryFragment extends Fragment implements StoryPresenter.View {
 
         //noinspection ConstantConditions
         User user = (User) getArguments().getSerializable(USER_KEY);
-        presenter = new StoryPresenter(this,user);
+        presenter = new StoryPresenter(this, Cache.getInstance().getCurrUserAuthToken(),user);
         RecyclerView storyRecyclerView = view.findViewById(R.id.storyRecyclerView);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this.getContext());
@@ -122,7 +114,7 @@ public class StoryFragment extends Fragment implements StoryPresenter.View {
         storyRecyclerView.setAdapter(storyRecyclerViewAdapter);
 
         storyRecyclerView.addOnScrollListener(new StoryRecyclerViewPaginationScrollListener(layoutManager));
-        presenter.loadMoreStories();
+        presenter.loadMoreItems();
         return view;
     }
 
@@ -176,7 +168,7 @@ public class StoryFragment extends Fragment implements StoryPresenter.View {
                         int start = s.getSpanStart(this);
                         int end = s.getSpanEnd(this);
                         String clickable = s.subSequence(start, end).toString();
-                        presenter.clickedUser(clickable);
+                        presenter.clicked(clickable);
                     }
 
                     @Override
@@ -333,7 +325,7 @@ public class StoryFragment extends Fragment implements StoryPresenter.View {
             // Run this code later on the UI thread
             final Handler handler = new Handler(Looper.getMainLooper());
             handler.postDelayed(() -> {
-                presenter.loadMoreStories();
+                presenter.loadMoreItems();
             }, 0);
 
         }

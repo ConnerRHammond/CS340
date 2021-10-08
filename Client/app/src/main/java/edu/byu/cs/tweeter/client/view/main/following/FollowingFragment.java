@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,14 +20,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import edu.byu.cs.client.R;
-import edu.byu.cs.tweeter.client.backgroundTask.GetFollowingTask;
-import edu.byu.cs.tweeter.client.backgroundTask.GetUserTask;
 import edu.byu.cs.tweeter.client.cache.Cache;
 import edu.byu.cs.tweeter.client.presenter.FollowingPresenter;
+import edu.byu.cs.tweeter.client.presenter.PagedPresenter;
 import edu.byu.cs.tweeter.client.view.main.MainActivity;
 import edu.byu.cs.tweeter.client.view.util.ImageUtils;
 import edu.byu.cs.tweeter.model.domain.User;
@@ -36,7 +32,7 @@ import edu.byu.cs.tweeter.model.domain.User;
 /**
  * Implements the "Following" tab.
  */
-public class FollowingFragment extends Fragment implements FollowingPresenter.View {
+public class FollowingFragment extends Fragment implements PagedPresenter.PagedView<User> {
 
     private static final String LOG_TAG = "FollowingFragment";
     private static final String USER_KEY = "UserKey";
@@ -65,11 +61,12 @@ public class FollowingFragment extends Fragment implements FollowingPresenter.Vi
     }
 
     @Override
+    public void setLoading(Boolean value) { followingRecyclerViewAdapter.setLoading(value); }
+
+    @Override
     public void addItems(List<User> followees) {
         followingRecyclerViewAdapter.addItems(followees);
     }
-    @Override
-    public void setLoading(boolean value){ followingRecyclerViewAdapter.setLoading(value); }
 
     @Override
     public void navigateToUser(User user) {
@@ -79,10 +76,9 @@ public class FollowingFragment extends Fragment implements FollowingPresenter.Vi
     }
 
     @Override
-    public void displayErrorMessage(String Message) {
-        Toast.makeText(getActivity(),Message,Toast.LENGTH_LONG);
-    }
+    public void navigateToUrl(String clickable) {
 
+    }
 
     @Override
     public void displayInfoMessage(String message) {
@@ -142,7 +138,7 @@ public class FollowingFragment extends Fragment implements FollowingPresenter.Vi
 //                            userAlias.getText().toString(), new GetUserHandler());
 //                    ExecutorService executor = Executors.newSingleThreadExecutor();
 //                    executor.execute(getUserTask);
-                    presenter.goToUser(userAlias.getText().toString());
+                    presenter.getUser(userAlias.getText().toString());
 
                 }
             });

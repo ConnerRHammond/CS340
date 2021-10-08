@@ -1,7 +1,5 @@
 package edu.byu.cs.tweeter.client.presenter;
 
-import android.view.View;
-
 import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -12,27 +10,22 @@ import java.util.List;
 
 import edu.byu.cs.tweeter.client.cache.Cache;
 import edu.byu.cs.tweeter.client.model.service.MainActivityService;
+import edu.byu.cs.tweeter.client.model.service.backgroundTask.Views.View;
 import edu.byu.cs.tweeter.client.view.main.MainActivity;
 import edu.byu.cs.tweeter.model.domain.AuthToken;
-import edu.byu.cs.tweeter.model.domain.Status;
 import edu.byu.cs.tweeter.model.domain.User;
 
-public class MainActivityPresenter implements MainActivityService.MainActivityObserver {
+public class MainActivityPresenter extends presenter <MainActivityPresenter.View>implements MainActivityService.MainActivityObserver, MainActivityService.FollowButtonObserver {
 
-    private MainActivityPresenter.View view;
     private AuthToken authToken;
     private User selectedUser;
-    public  interface  View{
-        void navigateToUser(User user);
-        void displayErrorMessage(String Message);
-        void displayInfoMessage(String message);
+    public  interface  View extends edu.byu.cs.tweeter.client.model.service.backgroundTask.Views.View {
         void updateFollowButton(boolean removed);
         void setEnabled(Boolean enabled);
         void setFollowerCount(String count);
         void setFolloweeCount(String count);
         void logOutUser();
         void setVisibulity(Boolean value);
-
     }
     public int findUrlEndIndex(String word) {
         if (word.contains(".com")) {
@@ -82,16 +75,13 @@ public class MainActivityPresenter implements MainActivityService.MainActivityOb
     }
     public List<String> parseMentions(String post) {
         List<String> containedMentions = new ArrayList<>();
-
         for (String word : post.split("\\s")) {
             if (word.startsWith("@")) {
                 word = word.replaceAll("[^a-zA-Z0-9]", "");
                 word = "@".concat(word);
-
                 containedMentions.add(word);
             }
         }
-
         return containedMentions;
     }
     public void postStatus(String post){
@@ -112,7 +102,7 @@ public class MainActivityPresenter implements MainActivityService.MainActivityOb
         new MainActivityService().unFollowTask(authToken,selectedUser,this);
     }
     public MainActivityPresenter(MainActivityPresenter.View view, User selectedUser){
-        this.view = view;
+        super(view);
         this.authToken = Cache.getInstance().getCurrUserAuthToken();
         this.selectedUser = selectedUser;
     }
@@ -125,41 +115,27 @@ public class MainActivityPresenter implements MainActivityService.MainActivityOb
             new MainActivityService().isFollower(authToken,currentUser,selectedUser,this);
         }
     }
-    public void updateSelectedUserFollowingAndFollowers(){
-        new MainActivityService().updateSelectedUserFollowingAndFollowers(authToken,selectedUser,this);
-    }
+    public void updateSelectedUserFollowingAndFollowers(){ new MainActivityService().updateSelectedUserFollowingAndFollowers(authToken,selectedUser,this); }
     @Override
     public void actionSucceded(String Message) {
         view.displayInfoMessage(Message);
     }
-
     @Override
     public void actionFailed(String Message) {
-        view.displayErrorMessage(Message);
+        view.displayInfoMessage(Message);
     }
-
     @Override
-    public void enableButton(Boolean enable) {
-        view.setEnabled(enable);
-    }
-
+    public void enableButton(Boolean enable) { view.setEnabled(enable); }
     @Override
-    public void updateFollowButton(Boolean value) {
-
-        view.updateFollowButton(value);
-
-    }
-
+    public void updateFollowButton(Boolean value) { view.updateFollowButton(value); }
     @Override
     public void setFolloweeCount(String count) {
         view.setFolloweeCount(count);
     }
-
     @Override
     public void setFollowerCount(String count) {
         view.setFollowerCount(count);
     }
-
     @Override
     public void logOutUser() {
         view.logOutUser();

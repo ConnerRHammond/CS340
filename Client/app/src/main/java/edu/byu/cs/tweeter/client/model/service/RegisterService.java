@@ -1,62 +1,33 @@
 package edu.byu.cs.tweeter.client.model.service;
 
-import android.content.Intent;
-import android.os.Handler;
-import android.os.Message;
-import android.widget.Toast;
+import android.os.Bundle;
 
-import androidx.annotation.NonNull;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import edu.byu.cs.tweeter.client.backgroundTask.RegisterTask;
 import edu.byu.cs.tweeter.client.cache.Cache;
-import edu.byu.cs.tweeter.client.view.main.MainActivity;
+import edu.byu.cs.tweeter.client.model.service.Tasks.RegisterTask;
+import edu.byu.cs.tweeter.client.model.service.backgroundTask.handler.BackgroundTaskHandler;
+import edu.byu.cs.tweeter.client.model.service.backgroundTask.observer.UserObserver;
 import edu.byu.cs.tweeter.model.domain.AuthToken;
 import edu.byu.cs.tweeter.model.domain.User;
-
-public class RegisterService {
-    public interface RegisterObserver{
-        void registerSucceeded(AuthToken authToken,User user);
-        void registerFailed(String message);
-        void registerThrewException(Exception ex);
-    }
-
-    public  void registerUser(String firstName, String lastName,String alias,String password,
-                              String imageBytesBase64,RegisterObserver observer){
+public class RegisterService extends ServiceBase {
+    public  void registerUser(String firstName, String lastName, String alias, String password,
+                              String imageBytesBase64, UserObserver observer){
         RegisterTask registerTask = new RegisterTask(firstName, lastName,
                 alias, password, imageBytesBase64, new RegisterHandler(observer));
-
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(registerTask);
+        Execute(registerTask);
     }
-    private class RegisterHandler extends Handler {
-        private RegisterObserver observer;
-
-        public  RegisterHandler(RegisterObserver observer){
-            this.observer = observer;
+    private class RegisterHandler extends BackgroundTaskHandler<UserObserver> {
+        public  RegisterHandler(UserObserver observer){
+            super(observer);
         }
         @Override
-        public void handleMessage(@NonNull Message msg) {
-            boolean success = msg.getData().getBoolean(RegisterTask.SUCCESS_KEY);
-            if (success) {
-                User registeredUser = (User) msg.getData().getSerializable(RegisterTask.USER_KEY);
-                AuthToken authToken = (AuthToken) msg.getData().getSerializable(RegisterTask.AUTH_TOKEN_KEY);
-
-//                Intent intent = new Intent(getContext(), MainActivity.class);
-
-                Cache.getInstance().setCurrUser(registeredUser);
-                Cache.getInstance().setCurrUserAuthToken(authToken);
-                observer.registerSucceeded(authToken,registeredUser);
-
-            } else if (msg.getData().containsKey(RegisterTask.MESSAGE_KEY)) {
-                String message = msg.getData().getString(RegisterTask.MESSAGE_KEY);
-                observer.registerFailed(message);
-            } else if (msg.getData().containsKey(RegisterTask.EXCEPTION_KEY)) {
-                Exception ex = (Exception) msg.getData().getSerializable(RegisterTask.EXCEPTION_KEY);
-                observer.registerThrewException(ex);
-            }
+        protected String getFailedMessagePrefix() { return "Register failed:"; }
+        @Override
+        protected void handleSuccessMessage(UserObserver observer, Bundle data) {
+            User registeredUser = (User) data.getSerializable(RegisterTask.USER_KEY);
+            AuthToken authToken = (AuthToken)data.getSerializable(RegisterTask.AUTH_TOKEN_KEY);
+            Cache.getInstance().setCurrUser(registeredUser);
+            Cache.getInstance().setCurrUserAuthToken(authToken);
+            observer.userSucceeded(authToken,registeredUser);
         }
     }
 }
