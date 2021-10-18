@@ -33,7 +33,7 @@ public class MainActivityService extends ServiceBase {
     }
 
     public interface MainActivityObserver extends ServiceObserver{
-        void actionSucceded(String Message);
+        void actionSucceded();
         void logOutUser();
     }
 
@@ -55,9 +55,8 @@ public class MainActivityService extends ServiceBase {
         Execute(logoutTask);
     }
 
-    public void postStatus(String post, User user, String date, List<String> URLS,List<String> containedMentions, MainActivityObserver observer){
-        Status newStatus = new Status(post,user, date , URLS, containedMentions);
-        PostStatusTask statusTask = new PostStatusTask(Cache.getInstance().getCurrUserAuthToken(),
+    public void postStatus(AuthToken authToken,Status newStatus,  MainActivityObserver observer){
+        PostStatusTask statusTask = new PostStatusTask(authToken,
                 newStatus, new PostStatusHandler(observer));
         Execute(statusTask);
     }
@@ -145,7 +144,7 @@ public class MainActivityService extends ServiceBase {
         @Override
         protected String getFailedMessagePrefix() { return "Failed to post status: "; }
         @Override
-        protected void handleSuccessMessage(MainActivityObserver observer, Bundle data) { observer.actionSucceded("Successfully posted"); }
+        protected void handleSuccessMessage(MainActivityObserver observer, Bundle data) { observer.actionSucceded(); }
 
     }
 }

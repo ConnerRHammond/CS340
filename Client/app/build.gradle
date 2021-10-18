@@ -24,6 +24,7 @@ android {
 }
 
 dependencies {
+    androidTestImplementation group: 'org.mockito', name: 'android', version: '2.20.0'
     implementation project(path: ':shared')
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.0.2'

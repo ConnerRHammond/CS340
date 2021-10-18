@@ -10,15 +10,15 @@ import java.util.List;
 
 import edu.byu.cs.tweeter.client.cache.Cache;
 import edu.byu.cs.tweeter.client.model.service.MainActivityService;
-import edu.byu.cs.tweeter.client.model.service.backgroundTask.Views.View;
-import edu.byu.cs.tweeter.client.view.main.MainActivity;
 import edu.byu.cs.tweeter.model.domain.AuthToken;
+import edu.byu.cs.tweeter.model.domain.Status;
 import edu.byu.cs.tweeter.model.domain.User;
 
 public class MainActivityPresenter extends presenter <MainActivityPresenter.View>implements MainActivityService.MainActivityObserver, MainActivityService.FollowButtonObserver {
 
     private AuthToken authToken;
     private User selectedUser;
+    private boolean doStuff;
     public  interface  View extends edu.byu.cs.tweeter.client.model.service.backgroundTask.Views.View {
         void updateFollowButton(boolean removed);
         void setEnabled(Boolean enabled);
@@ -86,8 +86,9 @@ public class MainActivityPresenter extends presenter <MainActivityPresenter.View
     }
     public void postStatus(String post){
         try {
-            new MainActivityService().postStatus(post, Cache.getInstance().getCurrUser(), getFormattedDateTime(), parseURLs(post),
-                    parseMentions(post),this );
+            view.displayInfoMessage("Posting");
+            Status newStatus = new Status(post,Cache.getInstance().getCurrUser(), getFormattedDateTime() , parseURLs(post), parseMentions(post));
+            getService().postStatus(authToken,newStatus,this);
         }catch (Exception e){
             view.displayInfoMessage("Error: "+ e.getMessage());
         }
@@ -101,9 +102,10 @@ public class MainActivityPresenter extends presenter <MainActivityPresenter.View
     public  void unFollow(){
         new MainActivityService().unFollowTask(authToken,selectedUser,this);
     }
-    public MainActivityPresenter(MainActivityPresenter.View view, User selectedUser){
+    public MainActivityPresenter(MainActivityPresenter.View view, User selectedUser,AuthToken authToken, boolean doStuff){
         super(view);
-        this.authToken = Cache.getInstance().getCurrUserAuthToken();
+        this.doStuff = doStuff;
+        this.authToken = authToken;
         this.selectedUser = selectedUser;
     }
     public void checkSelectedTarget(){
@@ -115,11 +117,11 @@ public class MainActivityPresenter extends presenter <MainActivityPresenter.View
             new MainActivityService().isFollower(authToken,currentUser,selectedUser,this);
         }
     }
-    public void updateSelectedUserFollowingAndFollowers(){ new MainActivityService().updateSelectedUserFollowingAndFollowers(authToken,selectedUser,this); }
-    @Override
-    public void actionSucceded(String Message) {
-        view.displayInfoMessage(Message);
+    public MainActivityService getService(){
+        return new MainActivityService();
     }
+    public void updateSelectedUserFollowingAndFollowers(){ if (doStuff){new MainActivityService().updateSelectedUserFollowingAndFollowers(authToken,selectedUser,this);} }
+
     @Override
     public void actionFailed(String Message) {
         view.displayInfoMessage(Message);
@@ -136,6 +138,10 @@ public class MainActivityPresenter extends presenter <MainActivityPresenter.View
     public void setFollowerCount(String count) {
         view.setFollowerCount(count);
     }
+
+    @Override
+    public void actionSucceded() { view.displayInfoMessage("Successfully posted"); }
+
     @Override
     public void logOutUser() {
         view.logOutUser();
