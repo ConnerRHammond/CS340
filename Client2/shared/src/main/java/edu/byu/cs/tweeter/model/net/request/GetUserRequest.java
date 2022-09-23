@@ -1,0 +1,34 @@
+package edu.byu.cs.tweeter.model.net.request;
+
+import java.io.Serializable;
+
+import edu.byu.cs.tweeter.model.domain.AuthToken;
+
+public class GetUserRequest implements Serializable {
+    private String alias;
+    private AuthToken authToken;
+
+    public GetUserRequest(){
+
+    }
+    public GetUserRequest(String alias, AuthToken authToken) {
+        this.alias = alias;
+        this.authToken = authToken;
+    }
+
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
+    }
+
+    public AuthToken getAuthToken() {
+        return authToken;
+    }
+
+    public void setAuthToken(AuthToken authToken) {
+        this.authToken = authToken;
+    }
+}
